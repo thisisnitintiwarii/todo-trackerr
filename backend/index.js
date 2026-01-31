@@ -10,9 +10,12 @@ const app = express();
 dotenv.config();
 
 app.use(cors({
-    origin:'http://localhost:5173',
-    credentials:true
-}))
+  origin: [
+    "http://localhost:5173",
+    "https://todo-trackerr.onrender.com"
+  ],
+  credentials: true
+}));
 
 const PORT = process.env.PORT || 3000;
 app.use(express.json());
