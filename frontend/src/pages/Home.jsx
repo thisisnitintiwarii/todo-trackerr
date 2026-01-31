@@ -3,74 +3,59 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "../main";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContest";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import { fetchTodos,updateTodo,addTodo,deleteTodo } from "../api/todo.jsx";
+
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState("");
   const [work, setwork] = useState("");
-  const [todos, setTodos] = useState([]);
-  const [completed, setCompleted] = useState([]);
   const [selectedTodo, setSelectedTodo] = useState(null);
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
   const { setIsAuth } = useAuth();
 
-  useEffect(() => {
-    const extractTodo = async () => {
-      try {
-        const respond = await axios.get(`${API_BASE_URL}/api/user/`, {
-          withCredentials: true,
-        });
-        setTodos(respond?.data?.todos || []);
-        setCompleted(respond?.data?.completed || []);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    extractTodo();
-  }, []);
 
-  const handleAddTodo = async () => {
-    try {
-      await axios.post(
-        `${API_BASE_URL}/api/user/addTodo`,
-        { title, work, status: "p" },
-        { withCredentials: true }
-      );
+  const {data:todos = [],isLoading,isError} = useQuery({
+    queryKey:["todos"],
+    queryFn: fetchTodos
+  })
+
+  // addTO -> now mutate the todos
+
+  const addTodoMutation = useMutation({
+    mutationFn: addTodo,
+    onSuccess:()=>{
+      queryClient.invalidateQueries(["todos"]);
       setShowModal(false);
       setTitle("");
       setwork("");
-      navigate("/");
-    } catch (error) {
-      console.log(error);
     }
-  };
+  })
 
-  const handleUpdateTodo = async (todoId) => {
-    try {
-      await axios.patch(
-        `${API_BASE_URL}/api/user/updateTodo/${todoId}`,
-        {},
-        { withCredentials: true }
-      );
-      navigate("/");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  //update Todo
+    const updateTodoMutation = useMutation({
+    mutationFn: updateTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["todos"]);
+    },
+  });
 
-  const handleDeleteTodo = async (todoId) => {
-    try {
-      await axios.post(
-        `${API_BASE_URL}/api/user/deleteTodo/${todoId}`,
-        {},
-        { withCredentials: true }
-      );
-      navigate("/");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  /// DELETE TODO 
+  const deleteTodoMutation = useMutation({
+    mutationFn: deleteTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["todos"]);
+    },
+  });
+
 
   const handleLogout = async () => {
     try {
@@ -83,6 +68,14 @@ export default function Home() {
       console.log(error);
     }
   };
+
+  const handleAddTodo = ()=>{
+    addTodoMutation.mutate({
+      title,
+      work,
+      status:"p"
+    })
+  }
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-black via-zinc-900 to-black px-6 py-6 text-white">
@@ -135,9 +128,9 @@ export default function Home() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleUpdateTodo(todo._id);
+                          updateTodoMutation.mutate(todo._id);
                         }}
-                        className="rounded-md bg-green-600 px-2 py-1 text-xs"
+                        className="cursor-pointer rounded-md bg-green-600 px-2 py-1 text-xs"
                       >
                         ✓
                       </button>
@@ -145,9 +138,9 @@ export default function Home() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteTodo(todo._id);
+                          deleteTodoMutation.mutate(todo._id)
                         }}
-                        className="rounded-md bg-red-600 px-2 py-1 text-xs"
+                        className="cursor-pointer rounded-md bg-red-600 px-2 py-1 text-xs"
                       >
                         ✕
                       </button>
@@ -181,9 +174,9 @@ export default function Home() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTodo(todo._id);
+                        deleteTodoMutation.mutate(todo._id);
                       }}
-                      className="rounded-md bg-red-600 px-2 py-1 text-xs"
+                      className="cursor-pointer rounded-md bg-red-600 px-2 py-1 text-xs"
                     >
                       ✕
                     </button>

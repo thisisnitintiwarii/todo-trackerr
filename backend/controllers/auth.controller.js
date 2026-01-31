@@ -31,13 +31,15 @@ export const signup = async (req, res) => {
     const token = jwt.sign(
       { userId: newUser._id },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
+
+    const isProduction = process.env.NODE_ENV === "production";
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     return res.status(201).json({
@@ -76,16 +78,16 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "7d",
+    });
+
+    const isProduction = process.env.NODE_ENV === "production";
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -116,7 +118,7 @@ export const logout = async (req, res) => {
 /* ================= ME ================= */
 export const me = async (req, res) => {
   try {
-    const token = req.cookies.jwt; 
+    const token = req.cookies.jwt;
 
     if (!token) {
       return res.status(401).json({ loggedIn: false });

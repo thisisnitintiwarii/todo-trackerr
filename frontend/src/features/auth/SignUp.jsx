@@ -2,13 +2,14 @@ import React from "react";
 import { useState } from "react";
 import { API_BASE_URL } from "../../main.jsx";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   // SingnUp mechanism
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [fullName, setFullName] = useState("");
-
+  const navigate = useNavigate();
   //function to handleSignUp in backend
 
   const handleSignUp = async (e) => {
@@ -24,7 +25,8 @@ export default function Signup() {
         },
         { withCredentials: true },
       );
-      console.log(respond);
+      alert("Account created successfully");
+       navigate("/login");      
     } catch (error) {
       console.log(error);
     }
